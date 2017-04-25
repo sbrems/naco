@@ -44,18 +44,18 @@ def return_quad(datadir,hexpt,bpm,sort_in_quads=True):
     star (0:topleft,1:bottomleft,2:bottomright,3:topright). 5 if not found.'''
     fns,data,header = read_fits(datadir,only_last=True)
     sdindices = []
-    for iim,fn,sd,head in enumerate(zip(fns,flats,header)):
+    for iim,head in enumerate(header):
         if 'OBJECT' in head[hobstype].upper():
             sdindices.append(iim)
     data =  data[sdindices,:,:]
-    header= header[sdindices]
-    fns =   fns[sdindices]
+    header= [header[ii] for ii in sdindices]
+    fns =   [fns[ii] for ii in sdindices]
     nframes = data.shape[0]
     data_med = np.median(data,axis=0)
     #checking for same exptime. Small sanity check
     exptimes = []
 #    obstimes = []
-    for head in headers:
+    for head in header:
         exptimes.append(head[hexpt])
 #        obstimes.append(Time(head['DATE-OBS']+head['TIME-OBS']))
     exptime = np.unique(exptimes)
@@ -70,7 +70,7 @@ def return_quad(datadir,hexpt,bpm,sort_in_quads=True):
     roughx = []
     ignore_iims =[]
     for iframe in range(nframes):
-        fnames[iframe] = os.path.join(datadir,fnames[iframe])
+        fns[iframe] = os.path.join(datadir,fns[iframe])
         data[iframe,:,:] -= data_med
         iquad,iy,ix = find_quad(data[iframe,:,:],bpm)
         if not sort_in_quads:
@@ -84,10 +84,10 @@ def return_quad(datadir,hexpt,bpm,sort_in_quads=True):
 
     print('Not using the following {} images, as no star was found:'.format(len(ignore_iims)))
     for iim in sorted(ignore_iims,reverse=True):
-        print(fnames[iim])
-        del fnames[iim]
+        print(fns[iim])
+        del fns[iim]
 
-    table = Table([fnames,quad,roughx,roughy],\
+    table = Table([fns,quad,roughx,roughy],\
                   names =('fname','quad','roughx','roughy'))
     table.sort('fname')
     table['fnumber'] = range(len(table))
@@ -169,13 +169,14 @@ def determine_neighbours(filetable):
     
     return filetable
 
-def flatfield_bkgrnd(masterflat,filetable,bpm,intermdir,verbose=True):
+def flatfield_bkgrnd(masterflat,filetable,bpm,intermdir,verbose=True,
+                     sort_in_quads=True):
     allsdata = []
     allsheader=[]
     allsmed = []
     fninterm = []
     nfiles = len(filetable)
-    print('Flatfielding the %d files'%nfiles)
+    print('Flatfielding the %d files (may contain more frames)'%nfiles)
     for ifile in range(nfiles):
         fn,sdata,sheader = read_fits(filetable['fname'][ifile],verbose=False,skip_last=True)
         sdata = sdata[0]
@@ -214,7 +215,7 @@ def flatfield_bkgrnd(masterflat,filetable,bpm,intermdir,verbose=True):
                 sdata = allsdata[ifile] - bkgnd
             correct_with_precomputed_neighbors(sdata,bad_and_neighbors)#inplace
         fninterm.append(os.path.join(intermdir,fn))
-        fits.writeto(os.path.join(intermdir,fn),sdata,header=allsheader[ifile],overwrite=True)
+        fits.writeto(os.path.join(intermdir,fn),sdata,header=allsheader[ifile],overwrite=True,output_verify='ignore')
     filetable['fninterm'] = fninterm
     ascii.write(filetable,output=os.path.join(intermdir,'filetable_bkgrnd.csv'),delimiter=',',
                 overwrite=True)

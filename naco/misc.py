@@ -16,7 +16,6 @@ def read_fits(directory,verbose=True,only_first=False,cam=None,
     if skip_last + only_first + only_last >= 2:
         raise ValueError('Please select only skip_last,only_last or only_first, but not mutliples')
     n_images = 0
-    form = []
     if directory.endswith('.fits'):
         files= [os.path.split(directory)[-1]]
         directory = os.path.dirname(directory)+'/'
@@ -40,6 +39,11 @@ def read_fits(directory,verbose=True,only_first=False,cam=None,
     #now make the array
     filenames = []
     headers = []
+    if form[-2] == form[-1] +2:
+        #naco additional readout rows
+        form = np.array(form)
+        form[-2] -= 2
+                        
     all_data = np.full((n_images,form[-2],form[-1]),np.nan,dtype=np.float64) #float16 for memory
     n = 0
     for fl in files:
@@ -64,11 +68,17 @@ def read_fits(directory,verbose=True,only_first=False,cam=None,
             elif (len(data.shape) == 3) & (only_last):
                 data = data[-1,:,:]
             if len(data.shape) == 3 :#image cube
+                if data.shape[-2] == data.shape[-1] + 2:
+                    #naco additional readout rows
+                    data = data[:,0:-2,:]
                 all_data[n:n+data.shape[0],:,:] = data
                 headers.extend(header for ii in range(data.shape[0]))
                 filenames.extend(fl for ii in range(data.shape[0]))
                 n += data.shape[0]
             elif len(data.shape) == 2: #one image
+                if data.shape[-2] == data.shape[-1] + 2:
+                    #naco additional readout rows
+                    data = data[0:-2,:]
                 all_data[n,:,:] = data
                 headers.append(header)
                 filenames.append(fl)

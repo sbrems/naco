@@ -1,7 +1,7 @@
 # parameterfiles for NICI redution
 
 #File names
-hexpt = 'DIT'
+hexpt = 'ESO DET DIT'
 hobstype= 'ESO DPR TYPE'
 
 #misc
