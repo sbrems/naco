@@ -131,7 +131,7 @@ def ident_fluxframes(filetable,sc_eq_fl=False):
     else:
         #use all frames as flux frames
         filetable['obsblock'] = -999
-        filetable['fflux']    = -999
+        filetable['flux']    = -999
 
 
     return filetable
@@ -179,7 +179,6 @@ def flatfield_bkgrnd(masterflat,filetable,bpm,intermdir,verbose=True,
     print('Flatfielding the %d files (may contain more frames)'%nfiles)
     for ifile in range(nfiles):
         fn,sdata,sheader = read_fits(filetable['fname'][ifile],verbose=False,skip_last=True)
-        sdata = sdata[0]
         sheader= sheader[0]
         allsdata.append(sdata/masterflat)
         allsheader.append(sheader)
@@ -190,7 +189,7 @@ def flatfield_bkgrnd(masterflat,filetable,bpm,intermdir,verbose=True,
     sdata_red = []
     print('Removing background and fixing pixels for %d files'%nfiles)
     if not sort_in_quads:
-       bkgnd = np.median(np.array(allsdata),axis=0) 
+       bkgnd = np.median(np.array(allsdata),axis=0)
     for ifile in range(nfiles):
         if ifile%10==0:print('Doing bgrnd+fixpix for %d / %d files'%(ifile,nfiles))
         if len(allsdata[ifile].shape) ==3:
@@ -203,7 +202,7 @@ def flatfield_bkgrnd(masterflat,filetable,bpm,intermdir,verbose=True,
                                   allsdata[filetable['obsafter'][ifile]]) /2.)
                 else:
                     sdata.append(allsdata[ifile][iim,:,:] - bkgnd)
-                correct_with_precomputed_neighbors(sdata[-1,:,:],bad_and_neighbors)#inplace
+                correct_with_precomputed_neighbors(sdata[-1][iim,:,:],bad_and_neighbors)#inplace
             sdata = np.array(sdata)
         elif len(allsdata[ifile].shape) ==2:
             fn = os.path.split(filetable['fname'][ifile])[-1]

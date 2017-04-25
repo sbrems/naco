@@ -96,19 +96,23 @@ def align_stars(indir,outdir,fluxtable=None,fflux=None,ncpu=6,keepfrac=0.7,
     print('\n****Cutting out {}-frames****\n'.format(dic_fflux[fflux]))
     pxhalf = 30 #px right and left of image. final size 2*pxhalf+1, planet at ~242px
     filetable = ascii.read(os.path.join(indir,'filetable_bkgrnd.csv'),delimiter=',')
-    filetable = filetable[(filetable['flux'] ==fflux) | (filetable['flux'] == -999)]
+    if fflux == 0:
+        filetable = filetable[(filetable['flux'] == fflux) | (filetable['flux'] == -999)]
+    else:
+        filetable = filetable[(filetable['flux'] == fflux)]
     #only continue if there is at least one file
     if len(filetable) == 0:
         print('No files found for type {}'.format(dic_fflux[fflux]))
     else:
         filetable['PA'] = np.nan
         nimages = len(filetable)
-        imdim = fits.getdata(filetable['fndewarped'][0]).shape[-1]
+        imdim = fits.getdata(filetable['fninterm'][0]).shape[-1]
         #read in the images
         images = []
         full_images = []
         remove_ims = [] #which are too close to corner
-        for ii,fn in enumerate(filetable['fndewarped']):
+        import ipdb;ipdb.set_trace()
+        for ii,fn in enumerate(filetable['fninterm']):
             data,head = fits.getdata(fn,header=True)
             full_images.append(data)
             if not len(data.shape) == 2:
