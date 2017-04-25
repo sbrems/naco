@@ -49,7 +49,7 @@ def do(date,target=None,pardir = None, datadir =None,darkdir=None,flatdir=None,
     #if waveband not in known_wavebands: raise ValueError('Your waveband %s not known. Choose from %s'\
     #                                           %(waveband,known_wavebands))   
     if target == None: target = 'HD97048'
-    if pardir == None: pardir  = '/home/stefan/Promotion/NACO/CC_Target_analysis/raws/'+target+'_NACOARCHIVE/'
+    if pardir == None: pardir  = '/disk1/brems/NACO/CC_Target_analysis/raws/'+target+'_NACOARCHIVE/'
     if datadir== None: datadir = os.path.join(pardir,date)
     #if darkdir== None: darkdir = os.path.join(pardir,date,'darks')
     if flatdir== None: flatdir = os.path.join(datadir,'flats')
@@ -89,8 +89,8 @@ def do(date,target=None,pardir = None, datadir =None,darkdir=None,flatdir=None,
     #then for sat frames
     fitmode = dic_fitmode[date]
     fluxtable = cut_star.align_stars(intermdir,finaldir,fflux=1,ncpu=ncpu,keepfrac=fkeepfrac,
-                                     maxhalfsize=130,flipx=flipx,fitmode='pos')
-    cut_star.align_stars(dewarpdir,finaldir,fluxtable=fluxtable,fflux=0,minhalfsize=minhalfsize,
+                                     maxhalfsize=130,flipx=False,fitmode='pos')
+    cut_star.align_stars(intermdir,finaldir,fluxtable=fluxtable,fflux=0,minhalfsize=minhalfsize,
                          ncpu=ncpu,keepfrac=keepfrac,flipx=False,fitmode =fitmode)
     
-    print('DONE WITH ALL FOR {}'.format(waveband))
+    print('DONE WITH ALL FOR DATE {}'.format(date))

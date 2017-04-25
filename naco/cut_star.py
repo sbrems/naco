@@ -96,7 +96,7 @@ def align_stars(indir,outdir,fluxtable=None,fflux=None,ncpu=6,keepfrac=0.7,
     print('\n****Cutting out {}-frames****\n'.format(dic_fflux[fflux]))
     pxhalf = 30 #px right and left of image. final size 2*pxhalf+1, planet at ~242px
     filetable = ascii.read(os.path.join(indir,'filetable_bkgrnd.csv'),delimiter=',')
-    filetable = filetable[(filetable['flux'] ==fflux) or (filetable['flux'] == -999)]
+    filetable = filetable[(filetable['flux'] ==fflux) | (filetable['flux'] == -999)]
     #only continue if there is at least one file
     if len(filetable) == 0:
         print('No files found for type {}'.format(dic_fflux[fflux]))
