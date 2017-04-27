@@ -189,21 +189,23 @@ def flatfield_bkgrnd(masterflat,filetable,bpm,intermdir,verbose=True,
     sdata_red = []
     print('Removing background and fixing pixels for %d files'%nfiles)
     if not sort_in_quads:
-       bkgnd = np.median(np.array(allsdata),axis=0)
+        if len(allsdata[0].shape) == 3:
+            bkgnd =np.median(np.vstack(allsdata[:]),axis=0)
+        else:
+            bkgnd = np.median(np.array(allsdata),axis=0)
     for ifile in range(nfiles):
         if ifile%10==0:print('Doing bgrnd+fixpix for %d / %d files'%(ifile,nfiles))
         if len(allsdata[ifile].shape) ==3:
-            sdata = []
+            sdata = np.full(allsdata[ifile].shape,np.nan)
             for iim in range(allsdata[ifile].shape[0]):
                 fn = os.path.split(filetable['fname'][ifile])[-1]
                 if sort_in_quads:
-                    sdata.append(allsdata[ifile][iim,:,:] -\
+                    sdata[iim,:,:] = allsdata[ifile][iim,:,:] -\
                                  (allsdata[filetable['obsbefore'][ifile]] +\
-                                  allsdata[filetable['obsafter'][ifile]]) /2.)
+                                  allsdata[filetable['obsafter'][ifile]]) /2.
                 else:
-                    sdata.append(allsdata[ifile][iim,:,:] - bkgnd)
-                correct_with_precomputed_neighbors(sdata[-1][iim,:,:],bad_and_neighbors)#inplace
-            sdata = np.array(sdata)
+                    sdata[iim,:,:] = allsdata[ifile][iim,:,:] - bkgnd
+                correct_with_precomputed_neighbors(sdata[iim,:,:],bad_and_neighbors)#inplace
         elif len(allsdata[ifile].shape) ==2:
             fn = os.path.split(filetable['fname'][ifile])[-1]
             if sort_in_quads:
@@ -212,7 +214,7 @@ def flatfield_bkgrnd(masterflat,filetable,bpm,intermdir,verbose=True,
                           allsdata[filetable['obsafter'][ifile]]) /2.
             else:
                 sdata = allsdata[ifile] - bkgnd
-            correct_with_precomputed_neighbors(sdata,bad_and_neighbors)#inplace
+            correct_with_precomputed_neighbors(sdata[-1],bad_and_neighbors)#inplace
         fninterm.append(os.path.join(intermdir,fn))
         fits.writeto(os.path.join(intermdir,fn),sdata,header=allsheader[ifile],overwrite=True,output_verify='ignore')
     filetable['fninterm'] = fninterm
