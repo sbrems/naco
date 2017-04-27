@@ -48,8 +48,8 @@ def do(date,target=None,pardir = None, datadir =None,darkdir=None,flatdir=None,
     #if waveband not in known_wavebands: raise ValueError('Your waveband %s not known. Choose from %s'\
     #                                           %(waveband,known_wavebands))   
     if target == None: target = 'HD97048'
-    if pardir == None: pardir  = '/home/stefan/Promotion/NACO/CC_Target_analysis/raws/'+target+'_NACOARCHIVE/'
-    if datadir== None: datadir = os.path.join(pardir,date,'testims')
+    if pardir == None: pardir  = '/disk1/brems/NACO/CC_Target_analysis/raws/'+target+'_NACOARCHIVE/'
+    if datadir== None: datadir = os.path.join(pardir,date)
     #if darkdir== None: darkdir = os.path.join(pardir,date,'darks')
     if flatdir== None: flatdir = os.path.join(datadir,'flats')
     outdir = os.path.join(pardir,date+'_reduced')
