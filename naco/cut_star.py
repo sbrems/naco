@@ -96,6 +96,11 @@ def align_stars(indir,outdir,fluxtable=None,fflux=None,ncpu=6,keepfrac=0.7,
     print('\n****Cutting out {}-frames****\n'.format(dic_fflux[fflux]))
     pxhalf = 30 #px right and left of image. final size 2*pxhalf+1, planet at ~242px
     filetable = ascii.read(os.path.join(indir,'filetable_bkgrnd.csv'),delimiter=',')
+    #make a longer copy for multiple files
+    filetable_long = Table(names=filetable.colnames)
+    for nn in filetable.colnames:
+        filetable_long[nn].dtype = filetable[nn].dtype
+    filetable_long['imnr']  = -999
     if fflux == 0:
         filetable = filetable[(filetable['flux'] == fflux) | (filetable['flux'] == -999)]
     else:
@@ -105,25 +110,26 @@ def align_stars(indir,outdir,fluxtable=None,fflux=None,ncpu=6,keepfrac=0.7,
         print('No files found for type {}'.format(dic_fflux[fflux]))
     else:
         filetable['PA'] = np.nan
+        filetable_long['PA'] = np.nan
         nimages = len(filetable)
         imdim = fits.getdata(filetable['fninterm'][0]).shape[-1]
         #read in the images
         images = []
         full_images = []
-        remove_ims = [] #which are too close to corner
+        remove_ims = [] #which are too close to center
         import ipdb;ipdb.set_trace()
         for ii,fn in enumerate(filetable['fninterm']):
-            data,head = fits.getdata(fn,header=True)
+            fns,data,head = read_fits(fn)
+            nims = data.shape[0]
             full_images.append(data)
-            if not len(data.shape) == 2:
-                raise ValueError('Unknown data fromat at file %s'%fn)
             starx = int(filetable[ii]['roughx'])
             stary = int(filetable[ii]['roughy'])
-    #        nims = data.shape[0]
-            datacut = np.full([2*pxhalf+1,2*pxhalf+1],np.nan)
-            data = data[max(0, stary-pxhalf) : min(stary+pxhalf+1, data.shape[1]),
-                        max(0, starx-pxhalf) : min(starx+pxhalf+1, data.shape[0]),
-                    ]
+            if not data.shape ==3:
+                raise ValueError('Unknown file data format')
+            datacut = np.full(:,[2*pxhalf+1,2*pxhalf+1],np.nan)
+            data = data[:,max(0, stary-pxhalf) : min(stary+pxhalf+1, data.shape[1]),
+                          max(0, starx-pxhalf) : min(starx+pxhalf+1, data.shape[0]),
+            ]
             filetable['PA'][ii] = get_pa(head,verbose=False)
             try:
                 datacut[0:datacut.shape[0],0:datacut.shape[1]] = data
@@ -131,10 +137,13 @@ def align_stars(indir,outdir,fluxtable=None,fflux=None,ncpu=6,keepfrac=0.7,
                 print('Star too close to center. Ignoring image %s'%fn)
                 remove_ims.append(ii)
                 continue
-            filetable['PA'][ii] = get_pa(head,verbose=False)
-            images.append(datacut)
-        full_images = np.array(full_images)
-        filetable.remove_rows(remove_ims)
+            for iim in range(nims):
+                np.vstack(filetable_long,filetable[ii],join_type='outer')
+                filetable_long[-1]['imnr'] = iim
+        full_images = np.vstack(np.array(full_images))
+        #filetable.remove_rows(remove_ims)
+        filetable = filetable_long
+        del filetable_long
     #    filetable.write('filetable_removed_close_borders.csv',delimiter=',',overwrite=True)
         print('Ignored {} images due to wrongly placed star.'.format(len(remove_ims)))
         nimages = len(filetable)
